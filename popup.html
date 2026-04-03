@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WA Bulk Message Sender</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+
+    body {
+      width: 420px;
+      min-height: 580px;
+      background: #f0f2f5;
+      color: #111;
+    }
+
+    .header {
+      background: #25D366;
+      color: white;
+      padding: 14px 18px 0;
+    }
+
+    .header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: rgba(255,255,255,0.75);
+      border-bottom: 3px solid transparent;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      color: white;
+      border-bottom: 3px solid white;
+    }
+
+    .tab .badge {
+      position: absolute;
+      top: 4px;
+      right: 10px;
+      background: #ff4444;
+      color: white;
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: flex; flex-direction: column; gap: 12px; }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #111;
+    }
+
+    .card p.hint {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 12px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .input-field:focus { border-color: #25D366; }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 9px;
+      border: 1.5px solid #25D366;
+      background: white;
+      color: #25D366;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover { background: #f0fff4; }
+
+    .btn.primary {
+      background: #25D366;
+      color: white;
+      border-color: #25D366;
+    }
+
+    .btn.primary:hover { background: #1ebe5d; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .textarea {
+      width: 100%;
+      min-height: 90px;
+      padding: 9px 12px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 12px;
+      resize: vertical;
+      outline: none;
+      font-family: inherit;
+      transition: border 0.2s;
+    }
+
+    .textarea:focus { border-color: #25D366; }
+
+    .personalized-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .tag {
+      background: #25D366;
+      color: white;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .tag:hover { background: #1ebe5d; }
+
+    .interval-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .interval-row label { color: #555; font-weight: 600; white-space: nowrap; }
+
+    .interval-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .interval-btn {
+      width: 26px;
+      height: 26px;
+      border: 1.5px solid #ccc;
+      background: white;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .interval-btn:hover { border-color: #25D366; color: #25D366; }
+
+    .interval-val {
+      width: 36px;
+      text-align: center;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 3px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #555;
+    }
+
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+    }
+
+    .toggle input { display: none; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #ccc;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .toggle-slider:before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .toggle input:checked + .toggle-slider { background: #25D366; }
+    .toggle input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+    /* Stats panel */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .stat-item { display: flex; flex-direction: column; gap: 4px; }
+
+    .stat-val {
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .stat-val.total { color: #333; }
+    .stat-val.dedup { color: #f5a623; }
+    .stat-val.success { color: #25D366; }
+    .stat-val.failed { color: #e74c3c; }
+
+    .stat-label { font-size: 10px; color: #777; }
+
+    .progress-wrap {
+      margin: 8px 0 4px;
+    }
+
+    .progress-bar-bg {
+      background: #e0e0e0;
+      border-radius: 10px;
+      height: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #25D366;
+      border-radius: 10px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #777;
+      margin-top: 4px;
+    }
+
+    .next-msg {
+      font-size: 12px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 2px;
+    }
+
+    .next-msg span {
+      color: #25D366;
+      font-size: 16px;
+    }
+
+    .hint-text {
+      font-size: 10px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    .contact-preview {
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 11px;
+      color: #555;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    #file-name-label {
+      font-size: 11px;
+      color: #25D366;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ccc;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .status-dot.running { background: #25D366; animation: pulse 1.2s infinite; }
+    .status-dot.paused { background: #f5a623; }
+    .status-dot.done { background: #3498db; }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .send-btn-big {
+      width: 100%;
+      padding: 12px;
+      background: #25D366;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .send-btn-big:hover { background: #1ebe5d; }
+    .send-btn-big:disabled { background: #a0e0bb; cursor: not-allowed; }
+
+    .alert {
+      font-size: 11px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #fff3cd;
+      border: 1px solid #ffe69c;
+      color: #856404;
+    }
+
+    .alert.error { background: #f8d7da; border-color: #f5c2c7; color: #842029; }
+    .alert.success { background: #d1e7dd; border-color: #badbcc; color: #0f5132; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🟢 WA Bulk Message Sender</h1>
+  <div class="tabs">
+    <div class="tab active" data-tab="send">Send Messages</div>
+    <div class="tab" data-tab="stats">Statistics</div>
+    <div class="tab" data-tab="more">More <span class="badge">NEW</span></div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- SEND TAB -->
+  <div class="tab-panel active" id="tab-send">
+
+    <div class="card">
+      <h3>📋 WhatsApp Number's Excel</h3>
+      <p class="hint">① Download template &nbsp;② Fill numbers &nbsp;③ Upload</p>
+      <div class="btn-row">
+        <button class="btn" id="btn-download-template">⬇ Excel Template</button>
+        <button class="btn" id="btn-upload-excel">⬆ Upload Excel</button>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none"/>
+      <div id="file-name-label"></div>
+      <div id="contact-preview" class="contact-preview" style="display:none;margin-top:8px;"></div>
+    </div>
+
+    <div class="card">
+      <h3>✍️ Message Text</h3>
+      <select id="template-select" class="input-field" style="margin-bottom:8px;">
+        <option value="">— Select template —</option>
+      </select>
+      <textarea id="message-text" class="textarea" placeholder="Type your message here...
+Use {WhatsApp Number}, {First Name}, {Last Name}, {Other} for personalization"></textarea>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" style="flex:none;padding:5px 10px;font-size:11px" id="btn-apologize">Apologize for bother</button>
+        <button class="btn" style="flex:none;padding:5px 10px;font-size:11px" id="btn-timestamp">Add timestamp</button>
+        <button class="btn primary" style="flex:none;padding:5px 10px;font-size:11px" id="btn-save-template">Save template</button>
+      </div>
+      <div style="margin-top:8px;">
+        <span style="font-size:11px;color:#25D366;font-weight:600;">Personalized:</span>
+        <div class="personalized-tags" id="personalized-tags">
+          <span class="tag" data-var="{WhatsApp Number}">WhatsApp Number</span>
+          <span class="tag" data-var="{First Name}">First Name</span>
+          <span class="tag" data-var="{Last Name}">Last Name</span>
+          <span class="tag" data-var="{Other}">Other</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="toggle-row" style="margin-bottom:10px">
+        <label class="toggle"><input type="checkbox" id="toggle-attachments"><span class="toggle-slider"></span></label>
+        <span>Send attachments</span>
+        <span id="attach-type-row" style="display:none;gap:10px;font-size:11px;margin-left:8px;flex-wrap:wrap">
+          <label><input type="radio" name="attach-type" value="image"> Image</label>
+          <label><input type="radio" name="attach-type" value="video"> Video</label>
+          <label><input type="radio" name="attach-type" value="document"> Document</label>
+        </span>
+      </div>
+      <input type="file" id="attach-file-input" style="display:none">
+      <div id="attach-file-label" style="font-size:11px;color:#25D366;display:none;"></div>
+    </div>
+
+    <div class="card">
+      <h3>⚙️ Sending Settings</h3>
+      <p class="hint">Messages sent at a random interval between min~max seconds</p>
+      <div class="interval-row">
+        <label>Interval:</label>
+        <div class="interval-ctrl">
+          <button class="interval-btn" id="min-dec">−</button>
+          <input class="interval-val" id="interval-min" value="6" readonly/>
+          <button class="interval-btn" id="min-inc">+</button>
+        </div>
+        <span style="color:#aaa">~</span>
+        <div class="interval-ctrl">
+          <button class="interval-btn" id="max-dec">−</button>
+          <input class="interval-val" id="interval-max" value="10" readonly/>
+          <button class="interval-btn" id="max-inc">+</button>
+        </div>
+        <span style="color:#777">seconds</span>
+      </div>
+      <div class="toggle-row" style="margin-top:10px">
+        <label class="toggle"><input type="checkbox" id="toggle-delete-after"><span class="toggle-slider"></span></label>
+        <span>Delete conversation immediately after sending</span>
+      </div>
+    </div>
+
+    <div id="send-alert" style="display:none"></div>
+
+    <button class="send-btn-big" id="btn-send">Send</button>
+
+  </div>
+
+  <!-- STATS TAB -->
+  <div class="tab-panel" id="tab-stats">
+
+    <div class="card">
+      <div class="next-msg">Current sending progress</div>
+      <div class="progress-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        <div class="progress-label">
+          <span><span class="status-dot" id="status-dot"></span><span id="status-text">Idle</span></span>
+          <span id="progress-count">0/0</span>
+        </div>
+      </div>
+      <div style="margin:8px 0;font-size:12px;font-weight:700;">
+        Next message in: <span id="next-countdown" style="color:#25D366;font-size:16px;">0s</span>
+      </div>
+      <div class="hint-text">Every 80 messages are grouped with a 3–5 min gap between groups.</div>
+    </div>
+
+    <div class="card">
+      <div class="stats-grid">
+        <div class="stat-item"><div class="stat-val total" id="stat-total">0</div><div class="stat-label">Total</div></div>
+        <div class="stat-item"><div class="stat-val dedup" id="stat-dedup">0</div><div class="stat-label">Deduplicated</div></div>
+        <div class="stat-item"><div class="stat-val success" id="stat-success">0</div><div class="stat-label">Sent successfully</div></div>
+        <div class="stat-item"><div class="stat-val failed" id="stat-failed">0</div><div class="stat-label">Failed to send</div></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" id="btn-pause">Pause</button>
+      <button class="btn" id="btn-export">Export results</button>
+      <button class="btn" id="btn-retry">Retry Failed</button>
+    </div>
+
+    <div class="hint-text" style="text-align:center">When messages fail continuously, click "Retry Failed".</div>
+
+    <div class="card" id="debug-card">
+      <h3>🔍 Debug Log</h3>
+      <div id="debug-log" style="font-size:10px;color:#555;font-family:monospace;max-height:100px;overflow-y:auto;background:#f8f8f8;padding:6px;border-radius:6px;"></div>
+      <button class="btn" id="btn-test-ping" style="margin-top:6px;width:100%">Test: Ping WhatsApp tab</button>
+    </div>
+
+  </div>
+
+  <!-- MORE TAB -->
+  <div class="tab-panel" id="tab-more">
+    <div class="card">
+      <h3>📁 Saved Templates</h3>
+      <div id="template-list" style="font-size:12px;color:#888;">No templates saved yet.</div>
+    </div>
+    <div class="card">
+      <h3>ℹ️ How to use</h3>
+      <ol style="font-size:12px;color:#555;padding-left:18px;line-height:1.8;">
+        <li>Open <strong>web.whatsapp.com</strong> and scan QR</li>
+        <li>Download the Excel template & fill in numbers</li>
+        <li>Upload the Excel here</li>
+        <li>Type your message (use tags for personalisation)</li>
+        <li>Set sending interval, then click <strong>Send</strong></li>
+        <li>Watch progress in the Statistics tab</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>🗑️ Clear Data</h3>
+      <button class="btn" id="btn-clear-templates" style="width:100%;margin-top:4px;">Clear all saved templates</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
