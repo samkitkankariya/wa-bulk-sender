@@ -60,7 +60,7 @@ document.getElementById('file-input').addEventListener('change', function () {
     preview.textContent = contacts.slice(0, 5).map(c => `${c.phone} ${c.firstName} ${c.lastName}`).join('\n')
       + (contacts.length > 5 ? `\n…and ${contacts.length - 5} more` : '');
     updatePersonalisedTags(rows[0]);
-    chrome.storage.session.set({ contacts });
+    chrome.storage.local.set({ contacts });
     showAlert(`${contacts.length} contacts loaded successfully.`, 'success');
   };
 
@@ -280,7 +280,7 @@ document.getElementById('btn-send').addEventListener('click', async () => {
   if (!message && !attachFile) return showAlert('Please enter a message or attach a file.', 'error');
 
   // Load contacts from session storage (set after file parse)
-  const session = await chrome.storage.session.get('contacts');
+  const session = await chrome.storage.local.get('contacts');
   const allContacts = session.contacts || contacts;
   if (!allContacts.length) return showAlert('Please upload an Excel file with contacts.', 'error');
 
@@ -339,7 +339,13 @@ document.getElementById('btn-send').addEventListener('click', async () => {
     failedList: []
   };
 
-  await new Promise(resolve => chrome.storage.session.set({ job }, resolve));
+  await new Promise((resolve, reject) => chrome.storage.local.set({ job }, () => {
+    if (chrome.runtime.lastError) {
+      console.error(chrome.runtime.lastError);
+      showAlert('Failed to save job, file might be too large.', 'error');
+      reject(chrome.runtime.lastError);
+    } else resolve();
+  }));
 
   // Switch to stats tab first so user sees feedback
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -363,7 +369,7 @@ document.getElementById('btn-send').addEventListener('click', async () => {
 let statsInterval = null;
 
 async function refreshStats() {
-  const data = await chrome.storage.session.get('job');
+  const data = await chrome.storage.local.get('job');
   const job = data.job;
   if (!job) return;
 
@@ -410,17 +416,17 @@ chrome.runtime.onMessage.addListener(msg => {
 
 // Pause / Resume
 document.getElementById('btn-pause').addEventListener('click', async () => {
-  const data = await chrome.storage.session.get('job');
+  const data = await chrome.storage.local.get('job');
   if (!data.job) return;
   data.job.paused = !data.job.paused;
-  await chrome.storage.session.set({ job: data.job });
+  await chrome.storage.local.set({ job: data.job });
   chrome.runtime.sendMessage({ type: data.job.paused ? 'PAUSE_JOB' : 'RESUME_JOB' });
   refreshStats();
 });
 
 // Export
 document.getElementById('btn-export').addEventListener('click', async () => {
-  const data = await chrome.storage.session.get('job');
+  const data = await chrome.storage.local.get('job');
   if (!data.job) return showAlert('No job data.', 'error');
   const headers = ['Phone', 'First Name', 'Last Name', 'Status'];
   const rows = data.job.contacts.map(c => [
@@ -441,7 +447,7 @@ document.getElementById('btn-export').addEventListener('click', async () => {
 
 // Retry failed
 document.getElementById('btn-retry').addEventListener('click', async () => {
-  const data = await chrome.storage.session.get('job');
+  const data = await chrome.storage.local.get('job');
   if (!data.job || !data.job.failedList.length) return showAlert('No failed contacts.', 'error');
   const failedContacts = data.job.contacts.filter(c => data.job.failedList.includes(c.phone));
   data.job.contacts = failedContacts;
@@ -451,7 +457,7 @@ document.getElementById('btn-retry').addEventListener('click', async () => {
   data.job.index = 0;
   data.job.running = true;
   data.job.paused = false;
-  await new Promise(resolve => chrome.storage.session.set({ job: data.job }, resolve));
+  await new Promise(resolve => chrome.storage.local.set({ job: data.job }, resolve));
   chrome.runtime.sendMessage({ type: 'START_JOB' });
   refreshStats();
 });
